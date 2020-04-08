@@ -44,7 +44,7 @@ class DataGenerator(Sequence):
 		image = cv2.imread(fpath)
 		image = cv2.resize(image, self.shape[:2])
 		if self.augment:
-			image = self.augment._augment(image)
+			image = self.augment.augment_one(image)
 		image = image / 255.
 		label = self.one_hot(label)
 		return image, label

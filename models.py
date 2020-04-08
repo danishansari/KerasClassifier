@@ -19,5 +19,3 @@ class Model(object):
 		model.add(Dropout(0.5))
 		model.add(Dense(self.output_shape, activation='softmax'))
 		return model
-
-
