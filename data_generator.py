@@ -39,8 +39,7 @@ class DataGenerator(Sequence):
 
 	def get_sample(self, index):
 		fname, label = self.list_ids[index]
-		fpath = os.path.join(self.path, label)
-		fpath = os.path.join(fpath, fname)
+		fpath = os.path.join(self.path, fname)
 		image = cv2.imread(fpath)
 		image = cv2.resize(image, self.shape[:2])
 		if self.augment:
@@ -61,9 +60,8 @@ class DataGenerator(Sequence):
 		with open(self.path) as fp:
 			data = fp.readlines()
 		for d in data:
-			fname = d.strip().split(',')[0]
-			fname = os.path.basename(fname)
-			label = d.strip().split(',')[1]
+			fname = d.strip().split(',')[1]
+			label = d.strip().split(',')[2]
 			list_ids.append([fname, label])
 			self.class_weight[label] += 1 
 			count +=1 
