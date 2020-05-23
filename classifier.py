@@ -1,16 +1,19 @@
 import keras
 from keras import optimizers
 
+import os
 import sys
+import cv2
 
 from data_generator import DataGenerator
 from models import Models
 
-class Train(object):
-	def __init__(self, shape, nclasses):
-		# self.model = Model(shape, nclasses).build_lenet()
-		# self.model = Models(shape, nclasses).build_spinenet()
-		self.model = Models(shape, nclasses).build_resnet34()
+class Classifier(object):
+	def __init__(self, shape, nclasses, model_path=''):
+		self.model = Models(shape, nclasses).build_alexnet_red(last_act='sigmoid')
+		self.loader = DataGenerator('', shape)
+		if os.path.exists(model_path):
+			self.model = Models(shape, nclasses).load_model(model_path)
 
 	def train(self, trn, val, batch, epochs):
 
@@ -18,7 +21,7 @@ class Train(object):
 		decay_rate = lr_rate / epochs
 		opt = keras.optimizers.SGD(lr=lr_rate, decay=decay_rate)
 
-		self.model.compile(loss=keras.losses.categorical_crossentropy,
+		self.model.compile(loss=keras.losses.binary_crossentropy,
 		              optimizer=opt,
 		              metrics=['accuracy'])
 
@@ -34,17 +37,29 @@ class Train(object):
 
 		self.model.save('final_classifier.h5')
 
+	def predict(self, image, thresh=0.5):
+		image = self.loader.preprocess(image, expand=True)
+		pred = self.model.predict(image)[0]
+		pred = [1 if p > thresh else 0 for p in pred
+		return pred
+
 def main():
-	# input_shape = (32, 32, 3)
-	# num_classes = 10
-	input_shape = (256, 256, 3)
+	input_shape = (128, 128, 3)
 	num_classes = 2
 	batch = 32
-	nepochs = 20
-	trn_loader = DataGenerator(sys.argv[1], input_shape, batch, True, False)
-	val_loader = DataGenerator(sys.argv[2], input_shape, batch, False, False)
-	
-	trainer = Train(input_shape, num_classes).train(trn_loader, val_loader, batch, nepochs)
+	nepochs = 50
+	if sys.argv[-1] == '-train':
+		trn_loader = DataGenerator(sys.argv[1], input_shape, batch, True, False)
+		val_loader = DataGenerator(sys.argv[2], input_shape, batch, False, False)
+		trainer = Classifier(input_shape, num_classes).train(trn_loader, val_loader, batch, nepochs)
+	else:
+		classifier = Classifier(input_shape, num_classes, sys.argv[1])
+		for files in os.listdir(sys.argv[2]):
+			filename = os.path.join(sys.argv[2], files)
+			img = cv2.imread(filename)
+			pred = classifier.predict(img)
+			print (pred)
+			x = input()
 
 if __name__=='__main__':
 	main()
